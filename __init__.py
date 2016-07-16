@@ -76,19 +76,27 @@ class   AudioStation():
             r = requests.get( cmd, cookies=self.cookies )
             #print r.json()
              
-    def volume( self, v ):
+    def set_volume( self, v ):
+        if v == '+':
+            self.volume = min( 100, self.volume + 25 )
+        elif v == '-':
+            self.volume = max( 0, self.volume - 25 )
+        else:
+            try:
+                v = max( 0, min( 100, int( v ) ) )
+            except:
+                return
+            
+        print self.volume
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_volume&value=%d' % ( self.ip, self.airplay, self.volume )
         r = requests.get( cmd, cookies=self.cookies )
            
-    def scan( self ):
+    def scan_device( self ):
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=list&type=all&additional=subplayer_list&version=2' % self.ip
         r = requests.get( cmd, cookies=self.cookies )
-        print r
         d = []
         j = r.json()
-        print j
-        for p in j['data']['player']:
-            if p['type'] == 'airplay':
+        for p in j['data']['players']:
+            if p['type'] == 'airplay' and p['id'] != '__SYNO_Multiple_AirPlay__':
                 d.append( p['id'] )
-        print d 
         return d
