@@ -1,17 +1,25 @@
 import  requests
 
 class   AudioStation():
-    def __init__( self, ip, login, password ):
+    def __init__( self, ip, login, password, priority=[] ):
         self.ip = ip
         self.airplay = None
         self.folder = None
         self.track = None
         self.path = None
+        self.priority = priority
         self.volume = 50
         r = requests.get('http://%s:5000/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login&account=%s&passwd=%s&session=AudioStation&format=cookie' % ( ip, login, password ) )
         self.cookies = { "stay_login": "1", "id": r.json()['data']['sid'] }
     def device( self, did ):
         self.airplay = did
+    def auto_device( self ):
+        l = self.scan_device()
+        for p in self.priority:
+            if p in l:
+                self.device( p )
+                return p
+        return None
     def play( self, value = None ):
         if self.airplay:
             cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=play' % ( self.ip, self.airplay )
