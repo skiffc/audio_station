@@ -61,7 +61,6 @@ class   AudioStation():
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_repeat&value=all' % ( self.ip, self.airplay ), cookies=self.cookies ) 
     def stop( self ):
-    def stop( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=stop' % ( self.ip, self.airplay ), cookies=self.cookies ) 
     def next( self ):
