@@ -1,24 +1,49 @@
 import  requests
 
 class   AudioStation():
-    def __init__( self, ip, login, password, priority=[] ):
+    def __init__( self, ip, login, password, priority=[], forbidden=[] ):
         self.ip = ip
         self.airplay = None
         self.folder = None
         self.track = None
         self.path = None
         self.priority = priority
+        self.forbidden = forbidden
         self.volume = 50
-        r = requests.get('http://%s:5000/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login&account=%s&passwd=%s&session=AudioStation&format=cookie' % ( ip, login, password ) )
+        self.login = login
+        self.password = password
+        self.cookies = None
+    def connect( self ):
+        r = requests.get('http://%s:5000/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login&account=%s&passwd=%s&session=AudioStation&format=cookie' % ( self.ip, self.login, self.password ) )
         self.cookies = { "stay_login": "1", "id": r.json()['data']['sid'] }
+    def test_connection( self ):
+        cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=list&type=all&additional=subplayer_list&version=2' % self.ip
+        try:
+            r = requests.get( cmd, cookies=self.cookies, timeout=1 )
+        except requests.exceptions.ConnectTimeout:
+            return False 
+        except requests.exceptions.ConnectionError:
+            return False 
+ 
+        j = r.json()
+        if 'error' in j:
+            print j
+            self.connect()
+        return True
+        
     def device( self, did ):
         self.airplay = did
     def auto_device( self ):
         l = self.scan_device()
+        print l
         for p in self.priority:
             if p in l:
                 self.device( p )
                 return p
+        else:
+            if l:
+                self.device( l[0] )
+                return l[0]
         return None
     def play( self, value = None ):
         if self.airplay:
@@ -29,6 +54,13 @@ class   AudioStation():
                 cmd += '&value=%s' % self.track
             r = requests.get( cmd, cookies=self.cookies ) 
             print self.folder, self.track, self.path
+    def repeat( self ):
+        if self.airplay:
+            r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_repeat&value=one' % ( self.ip, self.airplay ), cookies=self.cookies ) 
+    def no_repeat( self ):
+        if self.airplay:
+            r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_repeat&value=all' % ( self.ip, self.airplay ), cookies=self.cookies ) 
+    def stop( self ):
     def stop( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=stop' % ( self.ip, self.airplay ), cookies=self.cookies ) 
@@ -102,9 +134,10 @@ class   AudioStation():
     def scan_device( self ):
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=list&type=all&additional=subplayer_list&version=2' % self.ip
         r = requests.get( cmd, cookies=self.cookies )
+        print r.content
         d = []
         j = r.json()
         for p in j['data']['players']:
-            if p['type'] == 'airplay' and p['id'] != '__SYNO_Multiple_AirPlay__':
+            if p['type'] == 'airplay' and p['id'] != '__SYNO_Multiple_AirPlay__' and p['id'] not in self.forbidden:
                 d.append( p['id'] )
         return d
