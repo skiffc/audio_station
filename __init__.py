@@ -13,9 +13,11 @@ class   AudioStation():
         self.login = login
         self.password = password
         self.cookies = None
+        self.token = '--------' 
     def connect( self ):
         r = requests.get('http://%s:5000/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login&account=%s&passwd=%s&session=AudioStation&format=cookie' % ( self.ip, self.login, self.password ) )
         self.cookies = { "stay_login": "1", "id": r.json()['data']['sid'] }
+
     def test_connection( self ):
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=list&type=all&additional=subplayer_list&version=2' % self.ip
         try:
@@ -60,6 +62,15 @@ class   AudioStation():
     def no_repeat( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_repeat&value=all' % ( self.ip, self.airplay ), cookies=self.cookies ) 
+    def info( self ):
+        if self.airplay:
+            r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player_status.cgi?SynoToken=%s&api=SYNO.AudioStation.RemotePlayerStatus&method=getstatus&id=%s&additional=song_tag%%2Csong_audio%%2Csubplayer_volume&version=1' % ( self.ip, self.token, self.airplay ), cookies=self.cookies )
+            print r.json()
+            if r.json()['success']:
+                return r.json()['data']
+            else:
+                return {}
+
     def stop( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=stop' % ( self.ip, self.airplay ), cookies=self.cookies ) 
