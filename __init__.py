@@ -21,7 +21,7 @@ class   AudioStation():
     def test_connection( self ):
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=list&type=all&additional=subplayer_list&version=2' % self.ip
         try:
-            r = requests.get( cmd, cookies=self.cookies, timeout=1 )
+            r = requests.get( cmd, cookies=self.cookies, timeout=5 )
         except requests.exceptions.ConnectTimeout:
             return False 
         except requests.exceptions.ConnectionError:
