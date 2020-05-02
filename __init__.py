@@ -29,7 +29,7 @@ class   AudioStation():
  
         j = r.json()
         if 'error' in j:
-            print j
+            print(j)
             self.connect()
         return True
         
@@ -37,7 +37,7 @@ class   AudioStation():
         self.airplay = did
     def auto_device( self ):
         l = self.scan_device()
-        print l
+        print(l)
         for p in self.priority:
             if p in l:
                 self.device( p )
@@ -55,7 +55,7 @@ class   AudioStation():
             else:
                 cmd += '&value=%s' % self.track
             r = requests.get( cmd, cookies=self.cookies ) 
-            print self.folder, self.track, self.path
+            print("{} {} {}".format(self.folder,self.track, self.path))
     def repeat( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_repeat&value=one' % ( self.ip, self.airplay ), cookies=self.cookies ) 
@@ -65,7 +65,7 @@ class   AudioStation():
     def info( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player_status.cgi?SynoToken=%s&api=SYNO.AudioStation.RemotePlayerStatus&method=getstatus&id=%s&additional=song_tag%%2Csong_audio%%2Csubplayer_volume&version=1' % ( self.ip, self.token, self.airplay ), cookies=self.cookies )
-            print r.json()
+            print(r.json())
             if r.json()['success']:
                 return r.json()['data']
             else:
@@ -87,7 +87,7 @@ class   AudioStation():
         j = r.json()
         path_now = ''
         for p in s[1:]:
-            print 'Search:', p
+            print('Search: '+ p)
             path_now += '/%s' % p
             j = self.enter( path_now, j )
             if not j:
@@ -98,7 +98,7 @@ class   AudioStation():
         file_cnt = 0
         for p in j['data']['items']:
             if p['path'].encode('utf-8') == path:
-                print 'Found', p['id']
+                print ('Found '+p['id'])
                 did = str(p['id'])
                 if p['type'] == 'folder':
                     self.folder = p['id']
@@ -110,10 +110,10 @@ class   AudioStation():
                     return j
             if p['type'] == 'file':
                 file_cnt += 1
-        print 'No found:'
-        print j
+        print('No found:')
+        print(j)
         for p in j['data']['items']:
-            print p['path'].encode('utf-8')
+            print(p['path'].encode('utf-8'))
         return None
 
     def playlist( self, limit = 0 ):
@@ -137,14 +137,14 @@ class   AudioStation():
             except:
                 return
             
-        print self.volume
+        print(self.volume)
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_volume&value=%d' % ( self.ip, self.airplay, self.volume )
         r = requests.get( cmd, cookies=self.cookies )
            
     def scan_device( self ):
         cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=list&type=all&additional=subplayer_list&version=2' % self.ip
         r = requests.get( cmd, cookies=self.cookies )
-        print r.content
+        print(r.content)
         d = []
         j = r.json()
         for p in j['data']['players']:
