@@ -97,7 +97,7 @@ class   AudioStation():
     def enter( self, path, j ):
         file_cnt = 0
         for p in j['data']['items']:
-            if p['path'].encode('utf-8') == path:
+            if p['path'] == path:
                 print ('Found '+p['id'])
                 did = str(p['id'])
                 if p['type'] == 'folder':
