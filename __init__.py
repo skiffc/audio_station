@@ -5,6 +5,7 @@ class   AudioStation():
         self.ip = ip
         self.airplay = None
         self.folder = None
+        self.music = None
         self.track = None
         self.num = None
         self.path = None
@@ -50,13 +51,14 @@ class   AudioStation():
         return None
     def play( self, value = None ):
         if self.airplay:
-            cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=play' % ( self.ip, self.airplay )
-            if value:
-                cmd += '&value=%s' % value
-            else:
-                cmd += '&value=%s' % self.track
+            #cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=play' % ( self.ip, self.airplay )
+            if not value:
+                value = self.track
+
+            cmd = f'http://{self.ip}:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id={self.airplay}&version=3&action=play&value={value}'
             r = requests.get( cmd, cookies=self.cookies ) 
             print("{} {} {}".format(self.folder,self.track, self.path))
+            print(r.json())
     def repeat( self ):
         if self.airplay:
             r = requests.get( 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=set_repeat&value=one' % ( self.ip, self.airplay ), cookies=self.cookies ) 
@@ -107,6 +109,7 @@ class   AudioStation():
                     r = requests.get( 'http://%s:5000/webapi/AudioStation/folder.cgi?limit=1000&method=list&library=shared&api=SYNO.AudioStation.Folder&id=%s&additional=song_tag%%2Csong_audio%%2Csong_rating&version=2&sort_by=title&sort_direction=ASC' % ( self.ip, did ), cookies=self.cookies )
                     return r.json()
                 elif p['type'] == 'file':
+                    self.music = p['id']
                     self.track = str( file_cnt ) 
                     return j
             if p['type'] == 'file':
@@ -139,13 +142,21 @@ class   AudioStation():
         if self.airplay and self.folder:
             if limit == 0:
                 limit = self.get_num()
-            cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=updateplaylist&library=shared&id=%s&offset=0&limit=%d&play=true&version=2&containers_json=%%5B%%7B%%22type%%22%%3A%%22folder%%22%%2C%%22id%%22%%3A%%22%s%%22%%2C%%22recursive%%22%%3Afalse%%2C%%22sort_by%%22%%3A%%22title%%22%%2C%%22sort_direction%%22%%3A%%22ASC%%22%%7D%%5D' % ( self.ip, self.airplay, limit, self.folder )
-            r = requests.get( cmd, cookies=self.cookies )
-            #print r.json()
 
-            cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=getplaylist&id=%s&additional=song_tag%%2Csong_audio%%2Csong_rating&offset=0&limit=8192&version=2' % ( self.ip, self.airplay )
+            if limit == 1:
+                cmd = f'http://{self.ip}:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=updateplaylist&library=shared&id={self.airplay}&offset=0&limit=1&play=true&version=3&keep_shuffle_order=false&songs={self.music}&containers_json=%5B%5D'
+            else:
+                cmd = f'http://{self.ip}:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=updateplaylist&library=shared&id={self.airplay}&offset=0&limit={limit}&play=true&version=3&keep_shuffle_order=false&containers_json=%5B%7B%22type%22%3A%22folder%22%2C%22id%22%3A%22{self.folder}%22%2C%22recursive%22%3Afalse%2C%22sort_by%22%3A%22title%22%2C%22sort_direction%22%3A%22ASC%22%7D%5D'
+                #cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=updateplaylist&library=shared&id=%s&offset=0&limit=%d&play=true&version=2&containers_json=%%5B%%7B%%22type%%22%%3A%%22folder%%22%%2C%%22id%%22%%3A%%22%s%%22%%2C%%22recursive%%22%%3Afalse%%2C%%22sort_by%%22%%3A%%22title%%22%%2C%%22sort_direction%%22%%3A%%22ASC%%22%%7D%%5D' % ( self.ip, self.airplay, limit, self.folder )
+            print(cmd)
             r = requests.get( cmd, cookies=self.cookies )
-            #print r.json()
+            print(r.json())
+
+            #cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=getplaylist&id=%s&additional=song_tag%%2Csong_audio%%2Csong_rating&offset=0&limit=8192&version=2' % ( self.ip, self.airplay)
+            cmd = f'http://{self.ip}:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=getplaylist&id={self.airplay}&additional=song_tag%2Csong_audio%2Csong_rating&offset=0&limit={limit}&version=3'
+            print(cmd)
+            r = requests.get( cmd, cookies=self.cookies )
+            print(r.json())
              
     def set_volume( self, v ):
         if v == '+':
