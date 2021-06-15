@@ -52,12 +52,13 @@ class   AudioStation():
     def play( self, value = None ):
         if self.airplay:
             #cmd = 'http://%s:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id=%s&version=2&action=play' % ( self.ip, self.airplay )
-            if not value:
+            if value == None:
                 value = self.track
 
             cmd = f'http://{self.ip}:5000/webapi/AudioStation/remote_player.cgi?api=SYNO.AudioStation.RemotePlayer&method=control&id={self.airplay}&version=3&action=play&value={value}'
             r = requests.get( cmd, cookies=self.cookies ) 
             print("{} {} {}".format(self.folder,self.track, self.path))
+            print(cmd)
             print(r.json())
     def repeat( self ):
         if self.airplay:
